@@ -56,6 +56,13 @@ export interface Note {
   color?: string; // e.g., 'blue', 'purple', 'cyan' for neon accents
 }
 
+export interface FocusTask {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: number;
+}
+
 export type AppMode = 'neon' | 'zen' | 'hyper';
 
 // Window Augmentation for Web Speech API

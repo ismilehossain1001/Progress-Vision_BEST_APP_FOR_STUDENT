@@ -198,7 +198,8 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ onUploadComplete, history
              </div>
              
              <div className="grid grid-cols-2 gap-4 overflow-y-auto">
-                 {history.filter(e => e.mediaType === (file?.type.startsWith('video') ? 'video' : 'image')).map(entry => (
+                 {/* Safety check for file existence */}
+                 {history.filter(e => file && e.mediaType === (file.type.startsWith('video') ? 'video' : 'image')).map(entry => (
                      <div 
                         key={entry.id} 
                         onClick={() => { setComparisonEntry(entry); setShowSelector(false); }}
@@ -433,7 +434,7 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ onUploadComplete, history
                             {/* Data Readouts */}
                             <div className="absolute top-4 right-14 text-right">
                                 <p className="text-[8px] text-neon-cyan font-mono">REC :: {mode.toUpperCase()}</p>
-                                <p className="text-[8px] text-neon-cyan font-mono">{file?.type.toUpperCase()}</p>
+                                <p className="text-[8px] text-neon-cyan font-mono">{file?.type?.toUpperCase()}</p>
                             </div>
 
                             {/* Center Reticle */}

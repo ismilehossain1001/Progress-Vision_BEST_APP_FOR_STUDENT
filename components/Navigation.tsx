@@ -1,6 +1,7 @@
 
+
 import React from 'react';
-import { Home, BarChart2, Video, Target, CalendarDays, NotebookPen } from 'lucide-react';
+import { Home, BarChart2, Video, Target, CalendarDays, NotebookPen, BrainCircuit } from 'lucide-react';
 
 interface NavigationProps {
   currentView: string;
@@ -11,6 +12,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setCurrentView }) 
   const navItems = [
     { id: 'dashboard', icon: Home, label: 'Home' },
     { id: 'calendar', icon: CalendarDays, label: 'Plan' },
+    { id: 'focus', icon: BrainCircuit, label: 'Focus' },
     { id: 'upload', icon: Video, label: 'Log' },
     { id: 'notes', icon: NotebookPen, label: 'Notes' },
     { id: 'goals', icon: Target, label: 'Goals' },

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Note } from '../types';
-import { Pin, Trash2, Plus, X, Save, Edit3 } from 'lucide-react';
+import { Pin, Trash2, Edit3 } from 'lucide-react';
 
 interface DailyNotesProps {
   notes: Note[];
@@ -22,7 +22,6 @@ const DailyNotes: React.FC<DailyNotesProps> = ({ notes, onAddNote, onUpdateNote,
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
-        // If there's content, save it automatically? For now, just close.
         if (!newTitle && !newContent) {
            setIsExpanded(false);
         }
@@ -124,7 +123,7 @@ const DailyNotes: React.FC<DailyNotesProps> = ({ notes, onAddNote, onUpdateNote,
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {pinnedNotes.map(note => (
-                <NoteCard key={note.id} note={note} onTogglePin={(e) => togglePin(e, note)} onClick={() => setEditingNote(note)} onDelete={() => onDeleteNote(note.id)} />
+                <NoteCard key={note.id} note={note} onTogglePin={(e) => togglePin(e, note)} onClick={() => setEditingNote(note)} onDelete={(e) => { e.stopPropagation(); onDeleteNote(note.id); }} />
               ))}
             </div>
           </div>
@@ -137,7 +136,7 @@ const DailyNotes: React.FC<DailyNotesProps> = ({ notes, onAddNote, onUpdateNote,
             )}
             <div className="grid grid-cols-2 gap-3">
               {otherNotes.map(note => (
-                <NoteCard key={note.id} note={note} onTogglePin={(e) => togglePin(e, note)} onClick={() => setEditingNote(note)} onDelete={() => onDeleteNote(note.id)} />
+                <NoteCard key={note.id} note={note} onTogglePin={(e) => togglePin(e, note)} onClick={() => setEditingNote(note)} onDelete={(e) => { e.stopPropagation(); onDeleteNote(note.id); }} />
               ))}
             </div>
           </div>
@@ -203,7 +202,7 @@ const NoteCard: React.FC<{
     note: Note; 
     onClick: () => void; 
     onTogglePin: (e: React.MouseEvent) => void;
-    onDelete: () => void;
+    onDelete: (e: React.MouseEvent) => void;
 }> = ({ note, onClick, onTogglePin, onDelete }) => (
     <div 
         onClick={onClick}
@@ -221,8 +220,13 @@ const NoteCard: React.FC<{
         <p className="text-xs text-slate-400 line-clamp-4 leading-relaxed whitespace-pre-wrap">{note.content}</p>
         
         {/* Hover Actions */}
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-           {/* Can add more quick actions here if needed */}
+        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+           <button 
+                onClick={onDelete} 
+                className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
+           >
+               <Trash2 size={12} />
+           </button>
         </div>
     </div>
 );
