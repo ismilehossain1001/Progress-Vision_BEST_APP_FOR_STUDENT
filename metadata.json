@@ -1,0 +1,8 @@
+{
+  "name": "Progress Vision",
+  "description": "An advanced AI-powered personal growth and daily progress tracking app with futuristic UI.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
