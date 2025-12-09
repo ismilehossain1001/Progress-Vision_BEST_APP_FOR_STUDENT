@@ -100,38 +100,48 @@ const App: React.FC = () => {
 
   // Lazy Initialize State from LocalStorage to prevent overwriting
   const [user, setUser] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('pv_user');
-    return saved ? JSON.parse(saved) : INITIAL_USER;
+    try {
+        const saved = localStorage.getItem('pv_user');
+        return saved ? JSON.parse(saved) : INITIAL_USER;
+    } catch { return INITIAL_USER; }
   });
 
   const [entries, setEntries] = useState<ProgressEntry[]>(() => {
-    const saved = localStorage.getItem('pv_entries');
-    return saved ? JSON.parse(saved) : INITIAL_ENTRIES;
+    try {
+        const saved = localStorage.getItem('pv_entries');
+        return saved ? JSON.parse(saved) : INITIAL_ENTRIES;
+    } catch { return INITIAL_ENTRIES; }
   });
 
   const [goals, setGoals] = useState<Goal[]>(() => {
-    const saved = localStorage.getItem('pv_goals');
-    return saved ? JSON.parse(saved) : INITIAL_GOALS;
+    try {
+        const saved = localStorage.getItem('pv_goals');
+        return saved ? JSON.parse(saved) : INITIAL_GOALS;
+    } catch { return INITIAL_GOALS; }
   });
 
   const [notes, setNotes] = useState<Note[]>(() => {
-    const saved = localStorage.getItem('pv_notes');
-    return saved ? JSON.parse(saved) : INITIAL_NOTES;
+    try {
+        const saved = localStorage.getItem('pv_notes');
+        return saved ? JSON.parse(saved) : INITIAL_NOTES;
+    } catch { return INITIAL_NOTES; }
   });
 
   const [appMode, setAppMode] = useState<AppMode>(() => {
-    const saved = localStorage.getItem('pv_mode');
-    return (saved as AppMode) || 'neon';
+    try {
+        const saved = localStorage.getItem('pv_mode');
+        return (saved as AppMode) || 'neon';
+    } catch { return 'neon'; }
   });
 
   // Persistence Effects (Save on Change)
-  useEffect(() => { localStorage.setItem('pv_user', JSON.stringify(user)); }, [user]);
+  useEffect(() => { try { localStorage.setItem('pv_user', JSON.stringify(user)); } catch {} }, [user]);
   useEffect(() => {
     try { localStorage.setItem('pv_entries', JSON.stringify(entries)); } catch (e) { console.warn("Storage Full"); }
   }, [entries]);
-  useEffect(() => { localStorage.setItem('pv_goals', JSON.stringify(goals)); }, [goals]);
-  useEffect(() => { localStorage.setItem('pv_notes', JSON.stringify(notes)); }, [notes]);
-  useEffect(() => { localStorage.setItem('pv_mode', appMode); }, [appMode]);
+  useEffect(() => { try { localStorage.setItem('pv_goals', JSON.stringify(goals)); } catch {} }, [goals]);
+  useEffect(() => { try { localStorage.setItem('pv_notes', JSON.stringify(notes)); } catch {} }, [notes]);
+  useEffect(() => { try { localStorage.setItem('pv_mode', appMode); } catch {} }, [appMode]);
 
   const handleUploadComplete = (newEntry: ProgressEntry) => {
     setEntries(prev => [...prev, newEntry]);
@@ -239,6 +249,9 @@ const App: React.FC = () => {
       }
   };
 
+  // Responsive logic: These views benefit from wider screens
+  const isWideView = ['focus', 'upload', 'calendar', 'timeline', 'notes', 'rewards'].includes(currentView);
+
   if (!isAuthenticated) {
     return <Login onLogin={() => setIsAuthenticated(true)} />;
   }
@@ -259,7 +272,9 @@ const App: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="relative z-10 max-w-md mx-auto min-h-screen bg-black/20 shadow-2xl overflow-hidden animate-in fade-in duration-700">
+      <main className={`relative z-10 mx-auto min-h-screen bg-black/20 shadow-2xl overflow-hidden animate-in fade-in duration-700 transition-all ease-in-out ${
+        isWideView ? 'w-full max-w-7xl' : 'max-w-md'
+      }`}>
         {renderView()}
       </main>
 

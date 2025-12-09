@@ -48,6 +48,18 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, setIsOpen }) => {
     }
   }, [isOpen]);
 
+  // Preload Voices
+  useEffect(() => {
+    const loadVoices = () => {
+        const voices = synthRef.current.getVoices();
+        // Just trigger a get to ensure Chrome loads them
+    };
+    loadVoices();
+    if (synthRef.current.onvoiceschanged !== undefined) {
+        synthRef.current.onvoiceschanged = loadVoices;
+    }
+  }, []);
+
   // Initialize Speech Recognition
   useEffect(() => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -112,14 +124,15 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, setIsOpen }) => {
     
     // Attempt to select a futuristic/clean voice
     const voices = synthRef.current.getVoices();
-    const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha'));
+    const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha') || v.name.includes('Microsoft Zira'));
     if (preferredVoice) utterance.voice = preferredVoice;
 
     utterance.pitch = 1.0;
-    utterance.rate = 1.0;
+    utterance.rate = 1.1; // Slightly faster for AI feel
     
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
     
     synthRef.current.speak(utterance);
   };
@@ -177,121 +190,123 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, setIsOpen }) => {
 
   // The Chat Interface
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-dark-bg/95 backdrop-blur-md animate-in fade-in slide-in-from-bottom-10 duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10 bg-dark-surface/50 relative overflow-hidden">
-        {/* Audio Visualizer Background (Only when speaking) */}
-        {isSpeaking && (
-          <div className="absolute inset-0 flex items-center justify-center gap-1 opacity-20 pointer-events-none">
-             {[...Array(20)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className="w-1 bg-neon-cyan animate-[pulse_0.5s_ease-in-out_infinite]"
-                  style={{ 
-                    height: `${Math.random() * 100}%`, 
-                    animationDelay: `${Math.random() * 0.5}s` 
-                  }} 
-                />
-             ))}
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 relative z-10">
-          <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-neon-blue to-neon-purple flex items-center justify-center shadow-[0_0_15px_#bc13fe] transition-all duration-300 ${isSpeaking ? 'scale-110 shadow-[0_0_25px_#bc13fe]' : ''}`}>
-             <Sparkles size={20} className="text-white" />
-          </div>
-          <div>
-            <h3 className="font-display font-bold text-lg text-white tracking-wide">VISION AI</h3>
-            <p className="text-xs text-neon-cyan uppercase tracking-widest flex items-center gap-2">
-               {isSpeaking ? 'Transmitting Voice...' : 'Online // Mentor Mode'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 relative z-10">
-            <button 
-              onClick={() => {
-                setVoiceEnabled(!voiceEnabled);
-                if(voiceEnabled) synthRef.current.cancel();
-              }}
-              className={`p-2 rounded-full transition-colors ${voiceEnabled ? 'text-neon-cyan bg-neon-cyan/10' : 'text-slate-500 hover:bg-white/10'}`}
-            >
-                {voiceEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-            </button>
-            <button 
-              onClick={() => setIsOpen(false)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors"
-            >
-              <X className="text-slate-400" />
-            </button>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[85%] p-4 rounded-2xl ${
-                msg.role === 'user'
-                  ? 'bg-neon-blue/10 border border-neon-blue/30 text-slate-100 rounded-tr-none'
-                  : 'bg-dark-card border border-white/10 text-slate-200 rounded-tl-none'
-              }`}
-            >
-              <p className="text-sm leading-relaxed font-sans">{msg.text}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center sm:items-end sm:justify-end sm:p-6 pointer-events-none">
+      <div className="w-full h-full sm:max-w-md sm:h-[80vh] sm:rounded-3xl flex flex-col bg-dark-bg/95 backdrop-blur-md animate-in fade-in slide-in-from-bottom-10 duration-300 pointer-events-auto border border-white/10 shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-dark-surface/50 relative overflow-hidden shrink-0">
+            {/* Audio Visualizer Background (Only when speaking) */}
+            {isSpeaking && (
+            <div className="absolute inset-0 flex items-center justify-center gap-1 opacity-20 pointer-events-none">
+                {[...Array(20)].map((_, i) => (
+                    <div 
+                    key={i} 
+                    className="w-1 bg-neon-cyan animate-[pulse_0.5s_ease-in-out_infinite]"
+                    style={{ 
+                        height: `${Math.random() * 100}%`, 
+                        animationDelay: `${Math.random() * 0.5}s` 
+                    }} 
+                    />
+                ))}
             </div>
-          </div>
-        ))}
-        {isTyping && (
-           <div className="flex justify-start">
-             <div className="bg-dark-card border border-white/10 p-3 rounded-2xl rounded-tl-none flex gap-2 items-center">
-                <span className="w-2 h-2 bg-neon-cyan rounded-full animate-bounce" />
-                <span className="w-2 h-2 bg-neon-cyan rounded-full animate-bounce delay-100" />
-                <span className="w-2 h-2 bg-neon-cyan rounded-full animate-bounce delay-200" />
-             </div>
-           </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+            )}
 
-      {/* Input */}
-      <div className="p-4 bg-dark-surface/50 border-t border-white/10 pb-8">
-        <div className={`flex gap-2 items-center bg-dark-card border rounded-xl px-4 py-2 transition-all duration-300 ${isListening ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-white/10 focus-within:border-neon-blue/50'}`}>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={isListening ? "Listening..." : "Type or speak..."}
-            className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none font-sans"
-          />
-          
-          <button 
-            onClick={handleVoiceToggle}
-            className={`p-2 rounded-lg transition-all ${
-                isListening 
-                ? 'text-red-500 bg-red-500/10 animate-pulse scale-110' 
-                : 'text-slate-400 hover:text-neon-cyan hover:bg-neon-cyan/10'
-            }`}
-          >
-            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-          </button>
-
-          <button 
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="ml-2 p-2 bg-neon-blue/20 rounded-lg text-neon-blue hover:bg-neon-blue hover:text-black transition-all disabled:opacity-50"
-          >
-            <Send size={20} />
-          </button>
+            <div className="flex items-center gap-3 relative z-10">
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-neon-blue to-neon-purple flex items-center justify-center shadow-[0_0_15px_#bc13fe] transition-all duration-300 ${isSpeaking ? 'scale-110 shadow-[0_0_25px_#bc13fe]' : ''}`}>
+                <Sparkles size={20} className="text-white" />
+            </div>
+            <div>
+                <h3 className="font-display font-bold text-lg text-white tracking-wide">VISION AI</h3>
+                <p className="text-xs text-neon-cyan uppercase tracking-widest flex items-center gap-2">
+                {isSpeaking ? 'Transmitting Voice...' : 'Online // Mentor Mode'}
+                </p>
+            </div>
+            </div>
+            <div className="flex items-center gap-2 relative z-10">
+                <button 
+                onClick={() => {
+                    setVoiceEnabled(!voiceEnabled);
+                    if(voiceEnabled) synthRef.current.cancel();
+                }}
+                className={`p-2 rounded-full transition-colors ${voiceEnabled ? 'text-neon-cyan bg-neon-cyan/10' : 'text-slate-500 hover:bg-white/10'}`}
+                >
+                    {voiceEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                </button>
+                <button 
+                onClick={() => setIsOpen(false)}
+                className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                >
+                <X className="text-slate-400" />
+                </button>
+            </div>
         </div>
-        {isListening && (
-            <p className="text-[10px] text-red-400 mt-2 text-center animate-pulse tracking-widest uppercase">
-                • Live Recording Active •
-            </p>
-        )}
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {messages.map((msg) => (
+            <div
+                key={msg.id}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+                <div
+                className={`max-w-[85%] p-4 rounded-2xl ${
+                    msg.role === 'user'
+                    ? 'bg-neon-blue/10 border border-neon-blue/30 text-slate-100 rounded-tr-none'
+                    : 'bg-dark-card border border-white/10 text-slate-200 rounded-tl-none'
+                }`}
+                >
+                <p className="text-sm leading-relaxed font-sans">{msg.text}</p>
+                </div>
+            </div>
+            ))}
+            {isTyping && (
+            <div className="flex justify-start">
+                <div className="bg-dark-card border border-white/10 p-3 rounded-2xl rounded-tl-none flex gap-2 items-center">
+                    <span className="w-2 h-2 bg-neon-cyan rounded-full animate-bounce" />
+                    <span className="w-2 h-2 bg-neon-cyan rounded-full animate-bounce delay-100" />
+                    <span className="w-2 h-2 bg-neon-cyan rounded-full animate-bounce delay-200" />
+                </div>
+            </div>
+            )}
+            <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="p-4 bg-dark-surface/50 border-t border-white/10 pb-8 sm:pb-4 shrink-0">
+            <div className={`flex gap-2 items-center bg-dark-card border rounded-xl px-4 py-2 transition-all duration-300 ${isListening ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-white/10 focus-within:border-neon-blue/50'}`}>
+            <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder={isListening ? "Listening..." : "Type or speak..."}
+                className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none font-sans"
+            />
+            
+            <button 
+                onClick={handleVoiceToggle}
+                className={`p-2 rounded-lg transition-all ${
+                    isListening 
+                    ? 'text-red-500 bg-red-500/10 animate-pulse scale-110' 
+                    : 'text-slate-400 hover:text-neon-cyan hover:bg-neon-cyan/10'
+                }`}
+            >
+                {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+            </button>
+
+            <button 
+                onClick={handleSend}
+                disabled={!input.trim()}
+                className="ml-2 p-2 bg-neon-blue/20 rounded-lg text-neon-blue hover:bg-neon-blue hover:text-black transition-all disabled:opacity-50"
+            >
+                <Send size={20} />
+            </button>
+            </div>
+            {isListening && (
+                <p className="text-[10px] text-red-400 mt-2 text-center animate-pulse tracking-widest uppercase">
+                    • Live Recording Active •
+                </p>
+            )}
+        </div>
       </div>
     </div>
   );

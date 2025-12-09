@@ -20,8 +20,12 @@ const FocusMode: React.FC<FocusModeProps> = () => {
 
   // Task State - Lazy init to prevent overwriting localStorage on mount
   const [tasks, setTasks] = useState<FocusTask[]>(() => {
-    const savedTasks = localStorage.getItem('pv_focus_tasks');
-    return savedTasks ? JSON.parse(savedTasks) : [];
+    try {
+        const savedTasks = localStorage.getItem('pv_focus_tasks');
+        return savedTasks ? JSON.parse(savedTasks) : [];
+    } catch {
+        return [];
+    }
   });
   
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -29,14 +33,16 @@ const FocusMode: React.FC<FocusModeProps> = () => {
 
   // Save to local storage on change
   useEffect(() => {
-    localStorage.setItem('pv_focus_tasks', JSON.stringify(tasks));
+    try {
+        localStorage.setItem('pv_focus_tasks', JSON.stringify(tasks));
+    } catch (e) { console.error('LocalStorage error', e); }
   }, [tasks]);
 
   // Timer Logic - Optimized
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: number | undefined;
     if (isActive && timeLeft > 0) {
-      interval = setInterval(() => {
+      interval = window.setInterval(() => {
         setTimeLeft((prev) => {
             if (prev <= 1) {
                 setIsActive(false);
@@ -46,8 +52,8 @@ const FocusMode: React.FC<FocusModeProps> = () => {
         });
       }, 1000);
     } 
-    return () => clearInterval(interval);
-  }, [isActive]); // Removed timeLeft dependency to prevent interval thrashing
+    return () => window.clearInterval(interval);
+  }, [isActive]); 
 
   const switchMode = (newMode: TimerMode) => {
     setIsActive(false);

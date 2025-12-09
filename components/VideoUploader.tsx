@@ -31,8 +31,22 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ onUploadComplete, history
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
+  // Unmount Safety
+  const isMounted = useRef(true);
+
   // HUD Animation State
   const [scanLinePos, setScanLinePos] = useState(0);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      // Cleanup Blob URL to prevent memory leaks
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
 
   useEffect(() => {
     if (preview && !analysisResult) {
@@ -46,8 +60,14 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ onUploadComplete, history
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
+      
+      // Cleanup previous preview if exists
+      if (preview) URL.revokeObjectURL(preview);
+
       setFile(selectedFile);
-      setPreview(URL.createObjectURL(selectedFile));
+      const objectUrl = URL.createObjectURL(selectedFile);
+      setPreview(objectUrl);
+      
       setAnalysisResult(null);
       // Reset video state
       setIsPlaying(false);
@@ -56,13 +76,16 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ onUploadComplete, history
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setBase64Data(reader.result as string);
+        if (isMounted.current) {
+          setBase64Data(reader.result as string);
+        }
       };
       reader.readAsDataURL(selectedFile);
     }
   };
 
   const handleReset = () => {
+    if (preview) URL.revokeObjectURL(preview);
     setFile(null);
     setPreview(null);
     setBase64Data(null);
@@ -157,13 +180,17 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ onUploadComplete, history
         `Daily progress check-in. Mode: ${mode}. ${contextMap[mode]} ${comparisonContext}`
       );
       
+      if (!isMounted.current) return;
+
       // Simulate scanning delay for effect
       setTimeout(() => {
+        if (!isMounted.current) return;
         setAnalysisResult(analysis);
         setIsAnalyzing(false);
         
         // Auto-save delay
         setTimeout(() => {
+             if (!isMounted.current) return;
              const newEntry: ProgressEntry = {
                 id: Date.now().toString(),
                 date: new Date().toISOString(),
@@ -178,7 +205,7 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ onUploadComplete, history
 
     } catch (error) {
       console.error(error);
-      setIsAnalyzing(false);
+      if (isMounted.current) setIsAnalyzing(false);
     }
   };
 
