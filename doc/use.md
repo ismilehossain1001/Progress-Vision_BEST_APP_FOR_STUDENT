@@ -1,122 +1,116 @@
-# How to Use Progress Vision
+# Deployment Guide: Progress Vision
 
-This guide explains how to set up, run, and use **Progress Vision** on your local computer or mobile device.
+This guide explains how to take the code from this playground and deploy it as a live website on Vercel.
 
-## Prerequisites
+## Phase 1: Local Project Setup
 
-1.  **Google Gemini API Key**: You need a valid API key from [Google AI Studio](https://aistudio.google.com/).
-2.  **Node.js**: Recommended (v18 or higher) for running a local development server.
+Since you cannot deploy directly from this playground to Vercel, you need to set up a project folder on your computer.
 
----
-
-## Setup Instructions (Local Computer)
-
-Since the original code is built for a specific playground environment using direct CDN imports, the best way to run this on your own machine is to port it to a standard **Vite** project.
-
-### Step 1: Initialize a Project
-Open your terminal and create a new Vite project:
-
-```bash
-npm create vite@latest progress-vision -- --template react-ts
-cd progress-vision
-npm install
-```
-
-### Step 2: Install Dependencies
-Install the required libraries used in the app:
-
-```bash
-npm install @google/genai lucide-react recharts
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-```
-
-### Step 3: Configure Tailwind
-Update `tailwind.config.js` to match the design system. Copy the configuration from the `script` tag in the original `index.html` (fonts, colors, animations) into the `extend` section of your new config file.
-
-### Step 4: Copy Source Files
-1.  Copy all files from the `components/` folder to `src/components/`.
-2.  Copy `services/` to `src/services/`.
-3.  Copy `types.ts` to `src/types.ts`.
-4.  Replace the contents of `src/App.tsx` with the provided `App.tsx`.
-
-### Step 5: Configure API Key
-Create a `.env` file in the root of your project:
-
-```env
-VITE_API_KEY=your_actual_gemini_api_key_here
-```
-
-**Important:** In `services/geminiService.ts`, update the API key initialization:
-
-```typescript
-// Change this:
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-// To this (for Vite):
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
-```
-
-### Step 6: Run the App
-Start the development server:
-
-```bash
-npm run dev
-```
-The app will usually run at `http://localhost:5173`.
-
----
-
-## How to Use on Mobile
-
-You can access the application on your mobile device (phone/tablet) if it is connected to the same Wi-Fi network as your computer.
-
-1.  **Find your Local IP Address**:
-    *   **Windows**: Open Command Prompt, type `ipconfig`. Look for "IPv4 Address" (e.g., `192.168.1.5`).
-    *   **Mac/Linux**: Open Terminal, type `ifconfig | grep "inet "`.
-
-2.  **Expose Network via Vite**:
-    Update your `package.json` dev script:
-    ```json
-    "scripts": {
-      "dev": "vite --host"
-    }
+1.  **Create a Folder** on your computer named `progress-vision`.
+2.  **Initialize Project**: Open your terminal/command prompt in that folder and run:
+    ```bash
+    npm create vite@latest . -- --template react-ts
+    npm install
     ```
-    Or run: `npm run dev -- --host`
-
-3.  **Access on Mobile**:
-    Open your mobile browser (Chrome/Safari) and type the address shown in your terminal, usually:
-    `http://192.168.1.X:5173`
-
-    *Note: Camera and Microphone permissions will be requested. On some modern browsers, these permissions might be blocked if not serving over HTTPS. For full functionality on mobile, consider deploying to Vercel or Netlify.*
+3.  **Install Dependencies**: Run the following command to install the required libraries:
+    ```bash
+    npm install @google/genai lucide-react recharts clsx tailwind-merge
+    npm install -D tailwindcss postcss autoprefixer
+    npx tailwindcss init -p
+    ```
 
 ---
 
-## User Guide
+## Phase 2: Configuration Files
 
-### 1. Dashboard
-*   View your current Level, XP, and Streak.
-*   See a snapshot of your latest activity.
+You must create/update the following files in your local project to match the app's requirements.
 
-### 2. Log (Upload)
-*   Click the **Log** tab.
-*   Upload a photo or video of your activity (workout, drawing, coding, etc.).
-*   Select the analysis mode (Form, Mood, or Power).
-*   Wait for the AI to analyze and score your progress.
+### 1. Update `tailwind.config.js`
+Replace the content of `tailwind.config.js` with:
+```javascript
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['"Exo 2"', 'sans-serif'],
+        display: ['Rajdhani', 'sans-serif'],
+      },
+      colors: {
+        neon: {
+          blue: '#00f3ff',
+          purple: '#bc13fe',
+          cyan: '#0afff0',
+          green: '#0aff60'
+        },
+        dark: {
+          bg: '#050510',
+          card: '#0f0f1e',
+          surface: '#151525'
+        }
+      },
+      animation: {
+        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 6s ease-in-out infinite',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' }
+        }
+      }
+    },
+  },
+  plugins: [],
+}
+```
 
-### 3. Focus Mode
-*   Click the **Focus** tab.
-*   Set a timer (Focus, Short Break, Long Break).
-*   Add tasks to your "Mission Objectives" list.
+### 2. Update `src/index.css`
+Add these fonts and directives to the top of your CSS file:
+```css
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Rajdhani:wght@400;500;700&display=swap');
 
-### 4. AI Mentor (Voice)
-*   Click the **Floating Orb** in the bottom right corner.
-*   Type a question or click the **Microphone** to speak.
-*   The AI will respond with text and voice.
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-### 5. Settings
-*   Click the **Gear Icon** (top right).
-*   Change the visual theme:
-    *   **Neon Core**: Default futuristic look.
-    *   **Zen Flow**: Calmer, low contrast.
-    *   **Hyper Data**: High contrast green terminal look.
+body {
+  background-color: #050510;
+  color: #e2e8f0;
+}
+```
+
+---
+
+## Phase 3: Moving the Code
+
+1.  **Source Folder**: Go to the `src` folder on your computer.
+2.  **Copy Files**:
+    *   Copy the content of `App.tsx` from the playground to `src/App.tsx`.
+    *   Create a `types.ts` file in `src/` and copy the content.
+    *   Create a `components` folder in `src/` and copy all component files (Dashboard, VideoUploader, etc.).
+    *   Create a `services` folder in `src/` and copy `geminiService.ts`.
+
+---
+
+## Phase 4: Deploying to Vercel
+
+1.  **Push to GitHub**: Upload your `progress-vision` folder to a GitHub repository.
+2.  **Go to Vercel**: Log in to [vercel.com](https://vercel.com) and click **"Add New Project"**.
+3.  **Import**: Select your GitHub repository.
+4.  **Environment Variables (CRITICAL)**:
+    *   In the Vercel project settings, find "Environment Variables".
+    *   Add a new variable:
+        *   **Name:** `VITE_API_KEY`
+        *   **Value:** Your Google Gemini API Key.
+5.  **Deploy**: Click "Deploy".
+
+## Troubleshooting
+
+*   **API Key Error:** If the AI doesn't work, check the Console (F12). If you see 401/403 errors, ensure `VITE_API_KEY` is set correctly in Vercel settings and that you **re-deployed** after setting it.
+*   **Styling Issues:** If the app looks white/plain, ensure `tailwind.config.js` is set up correctly and imported in `index.css`.
+*   **Microphone/Camera:** You must deploy to `https` (which Vercel does automatically) for camera/mic access to work.

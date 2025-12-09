@@ -1,7 +1,32 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ProgressEntry } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Robust API Key retrieval for both Playground and Vite/Vercel environments
+const getApiKey = (): string => {
+  let key = "";
+  
+  // Try Vite/Standard Web Environment
+  try {
+    // @ts-ignore
+    if (import.meta.env?.VITE_API_KEY) {
+      // @ts-ignore
+      key = import.meta.env.VITE_API_KEY;
+    }
+  } catch (e) {}
+
+  // Fallback to Playground/Node Environment if not found
+  if (!key) {
+    try {
+      if (process.env.API_KEY) {
+        key = process.env.API_KEY;
+      }
+    } catch (e) {}
+  }
+  
+  return key;
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 const SYSTEM_INSTRUCTION = `You are "Progress Vision", a futuristic, highly intelligent AI personal growth coach. 
 Your tone is encouraging, concise, professional, and slightly futuristic.
