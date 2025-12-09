@@ -37,14 +37,20 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ onUploadComplete, history
   // HUD Animation State
   const [scanLinePos, setScanLinePos] = useState(0);
 
+  // Track component mount status
   useEffect(() => {
     isMounted.current = true;
     return () => {
       isMounted.current = false;
-      // Cleanup Blob URL to prevent memory leaks
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
+    };
+  }, []);
+
+  // Cleanup Blob URLs
+  useEffect(() => {
+    return () => {
+        if (preview) {
+            URL.revokeObjectURL(preview);
+        }
     };
   }, [preview]);
 

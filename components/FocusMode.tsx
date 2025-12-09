@@ -53,7 +53,7 @@ const FocusMode: React.FC<FocusModeProps> = () => {
       }, 1000);
     } 
     return () => window.clearInterval(interval);
-  }, [isActive]); 
+  }, [isActive, timeLeft]); 
 
   const switchMode = (newMode: TimerMode) => {
     setIsActive(false);

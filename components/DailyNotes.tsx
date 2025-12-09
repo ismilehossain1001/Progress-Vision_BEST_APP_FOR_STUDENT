@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Note } from '../types';
-import { Pin, Trash2, Edit3 } from 'lucide-react';
+import { Pin, Trash2, Edit3, Palette } from 'lucide-react';
 
 interface DailyNotesProps {
   notes: Note[];
@@ -14,9 +14,17 @@ const DailyNotes: React.FC<DailyNotesProps> = ({ notes, onAddNote, onUpdateNote,
   const [isExpanded, setIsExpanded] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [selectedColor, setSelectedColor] = useState<string>('blue');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   const inputRef = useRef<HTMLDivElement>(null);
+
+  const colors = [
+    { id: 'blue', bg: 'bg-neon-blue/10 border-neon-blue/50' },
+    { id: 'purple', bg: 'bg-neon-purple/10 border-neon-purple/50' },
+    { id: 'green', bg: 'bg-neon-green/10 border-neon-green/50' },
+    { id: 'pink', bg: 'bg-pink-500/10 border-pink-500/50' },
+  ];
 
   // Close input when clicking outside
   useEffect(() => {
@@ -43,12 +51,13 @@ const DailyNotes: React.FC<DailyNotesProps> = ({ notes, onAddNote, onUpdateNote,
       content: newContent,
       createdAt: Date.now(),
       isPinned: false,
-      color: 'blue' // Default
+      color: selectedColor
     };
 
     onAddNote(note);
     setNewTitle('');
     setNewContent('');
+    setSelectedColor('blue');
     setIsExpanded(false);
   };
 
@@ -93,23 +102,34 @@ const DailyNotes: React.FC<DailyNotesProps> = ({ notes, onAddNote, onUpdateNote,
           className={`w-full bg-transparent text-slate-300 placeholder-slate-500 outline-none resize-none font-sans ${isExpanded ? 'h-32' : 'h-6'}`}
         />
         {isExpanded && (
-          <div className="flex justify-end mt-2 pt-2 border-t border-white/5 gap-2">
-             <button 
-                onClick={() => {
-                    setNewTitle('');
-                    setNewContent('');
-                    setIsExpanded(false);
-                }}
-                className="px-4 py-2 text-slate-400 text-xs hover:text-white transition-colors"
-            >
-                Close
-            </button>
-            <button 
-                onClick={handleAdd}
-                className="px-6 py-2 bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/50 rounded-lg text-xs font-bold hover:bg-neon-cyan hover:text-black transition-all"
-            >
-                Save Log
-            </button>
+          <div className="flex justify-between items-center mt-2 pt-2 border-t border-white/5">
+             <div className="flex gap-2">
+                 {colors.map(c => (
+                     <button 
+                        key={c.id}
+                        onClick={() => setSelectedColor(c.id)}
+                        className={`w-6 h-6 rounded-full border transition-transform ${c.bg} ${selectedColor === c.id ? 'scale-110 ring-2 ring-white' : ''}`}
+                     />
+                 ))}
+             </div>
+             <div className="flex gap-2">
+                <button 
+                    onClick={() => {
+                        setNewTitle('');
+                        setNewContent('');
+                        setIsExpanded(false);
+                    }}
+                    className="px-4 py-2 text-slate-400 text-xs hover:text-white transition-colors"
+                >
+                    Close
+                </button>
+                <button 
+                    onClick={handleAdd}
+                    className="px-6 py-2 bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/50 rounded-lg text-xs font-bold hover:bg-neon-cyan hover:text-black transition-all"
+                >
+                    Save Log
+                </button>
+            </div>
           </div>
         )}
       </div>
@@ -203,32 +223,44 @@ const NoteCard: React.FC<{
     onClick: () => void; 
     onTogglePin: (e: React.MouseEvent) => void;
     onDelete: (e: React.MouseEvent) => void;
-}> = ({ note, onClick, onTogglePin, onDelete }) => (
-    <div 
-        onClick={onClick}
-        className="group relative bg-dark-card border border-white/5 rounded-xl p-3 hover:border-white/20 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 active:scale-95 flex flex-col h-auto break-inside-avoid"
-    >
-        <div className="flex justify-between items-start mb-2">
-            {note.title && <h4 className="font-bold text-slate-200 text-sm line-clamp-2">{note.title}</h4>}
+}> = ({ note, onClick, onTogglePin, onDelete }) => {
+    // Determine styles based on color tag
+    const getStyles = (color?: string) => {
+        switch(color) {
+            case 'purple': return 'border-neon-purple/30 bg-neon-purple/5';
+            case 'green': return 'border-neon-green/30 bg-neon-green/5';
+            case 'pink': return 'border-pink-500/30 bg-pink-500/5';
+            default: return 'border-white/5 bg-dark-card'; // Default/Blue
+        }
+    };
+
+    return (
+        <div 
+            onClick={onClick}
+            className={`group relative border rounded-xl p-3 hover:border-white/20 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 active:scale-95 flex flex-col h-auto break-inside-avoid ${getStyles(note.color)}`}
+        >
+            <div className="flex justify-between items-start mb-2">
+                {note.title && <h4 className="font-bold text-slate-200 text-sm line-clamp-2">{note.title}</h4>}
+                <button 
+                    onClick={onTogglePin}
+                    className={`p-1 rounded-full transition-colors ${note.isPinned ? 'text-neon-cyan bg-neon-cyan/10' : 'text-slate-600 opacity-0 group-hover:opacity-100 hover:bg-white/10'}`}
+                >
+                    <Pin size={12} className={note.isPinned ? 'fill-neon-cyan' : ''} />
+                </button>
+            </div>
+            <p className="text-xs text-slate-400 line-clamp-4 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+            
+            {/* Hover Actions */}
+            <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
             <button 
-                onClick={onTogglePin}
-                className={`p-1 rounded-full transition-colors ${note.isPinned ? 'text-neon-cyan bg-neon-cyan/10' : 'text-slate-600 opacity-0 group-hover:opacity-100 hover:bg-white/10'}`}
+                    onClick={onDelete} 
+                    className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
             >
-                <Pin size={12} className={note.isPinned ? 'fill-neon-cyan' : ''} />
+                <Trash2 size={12} />
             </button>
+            </div>
         </div>
-        <p className="text-xs text-slate-400 line-clamp-4 leading-relaxed whitespace-pre-wrap">{note.content}</p>
-        
-        {/* Hover Actions */}
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-           <button 
-                onClick={onDelete} 
-                className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
-           >
-               <Trash2 size={12} />
-           </button>
-        </div>
-    </div>
-);
+    );
+};
 
 export default DailyNotes;
